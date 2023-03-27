@@ -28,55 +28,56 @@
 </body> 
 </html> 
 <script> 
-jQuery(function($){ 
-if (!('WebSocket' in window)) { 
-alert('Your browser does not support web sockets'); 
-}else{ 
-setup(); 
-} 
-function setup(){ 
-var host = 'ws://server_ip:81'; 
-var socket = new WebSocket(host); 
-socket.binaryType = 'arraybuffer'; 
-if(socket){ 
-socket.onopen = function(){ 
-} 
-socket.onmessage = function(msg){ 
-var bytes = new Uint8Array(msg.data); 
-var binary= ''; 
-var len = bytes.byteLength; 
-for (var i = 0; i < len; i++) { 
-binary += String.fromCharCode(bytes[i]) 
-} 
-var img = document.getElementById('live'); 
-img.src = 'data:image/jpg;base64,'+window.btoa(binary); 
-} 
-socket.onclose = function(){ 
-showServerResponse('The connection has been closed.'); 
-} 
-$('.key').mousedown(function(){
-	if(socket.readyState === socket.OPEN){ // 연결 상태 확인
-		socket.send($(this).attr('id')); // 웹소켓 서버에게 메시지 전송
-    }else{
-        alert('연결된 웹소켓 서버가 없습니다.');
-    }
-});
-$('.key').mouseup(function(){
-	if(socket.readyState === socket.OPEN){ // 연결 상태 확인
-		socket.send('reset'); // 웹소켓 서버에게 메시지 전송
-    }else{
-        alert('연결된 웹소켓 서버가 없습니다.');
-    }
-});
-$('.key').mouseout(function(){
-	if(socket.readyState === socket.OPEN){ // 연결 상태 확인
-		socket.send('reset'); // 웹소켓 서버에게 메시지 전송
-    }else{
-        alert('연결된 웹소켓 서버가 없습니다.');
-    }
-});
-} 
-} 
-}); 
+	jQuery(function($){ 
+	if (!('WebSocket' in window)) { 
+		alert('Your browser does not support web sockets'); 
+	}else{ 
+	setup(); 
+	} 
+	function setup(){ 
+		var host = 'ws://34.125.119.133:80'; 
+		var socket = new WebSocket(host,"mon_2938"); 
+		socket.binaryType = 'arraybuffer'; 
+		if(socket){ 
+			socket.onopen = function(){ 
+			console.log("웹소켓서버와 연결 성공");
+		} 
+		socket.onmessage = function(msg){ 
+			var bytes = new Uint8Array(msg.data); 
+			var binary= ''; 
+			var len = bytes.byteLength; 
+			for (var i = 0; i < len; i++) { 
+				binary += String.fromCharCode(bytes[i]) 
+			} 
+			var img = document.getElementById('live'); 
+			img.src = 'data:image/jpg;base64,'+window.btoa(binary); 
+		} 
+		socket.onclose = function(){ 
+			alert('The connection has been closed.'); 
+		} 
+		$('.key').mousedown(function(){
+			if(socket.readyState === socket.OPEN){ // 연결 상태 확인
+				socket.send($(this).attr('id')); // 웹소켓 서버에게 메시지 전송
+			}else{
+				alert('연결된 웹소켓 서버가 없습니다.');
+			}
+		});
+		$('.key').mouseup(function(){
+			if(socket.readyState === socket.OPEN){ // 연결 상태 확인
+				socket.send('reset'); // 웹소켓 서버에게 메시지 전송
+			}else{
+				alert('연결된 웹소켓 서버가 없습니다.');
+			}
+		});
+		$('.key').mouseout(function(){
+			if(socket.readyState === socket.OPEN){ // 연결 상태 확인
+				socket.send('reset'); // 웹소켓 서버에게 메시지 전송
+			}else{
+				alert('연결된 웹소켓 서버가 없습니다.');
+			}
+		});
+		} 
+	} 
+	}); 
 
 </script>
