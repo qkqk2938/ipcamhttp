@@ -1,6 +1,6 @@
 'use strict'
 const wsModule = require('ws');
-
+const fs = require('fs');
 
 
 class Websocket {
@@ -8,6 +8,7 @@ class Websocket {
     constructor() {
         this.ipcam;
         this.mon;
+        this.capture = false;
     }
 
     createServer(HTTPServer){
@@ -20,7 +21,7 @@ class Websocket {
             }
         );
         
-        wsServer.on('connection', (ws, request)=> {
+        wsServer.on('connection', async (ws, request)=> {
 
             const ip = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
             console.log(`새로운 클라이언트[${ip}] 접속`);
@@ -30,10 +31,24 @@ class Websocket {
                 this.mon = ws;
                 console.log(`mon up`);
                 ws.on('message', (msg)=>{
-                    if(this.ipcam !==undefined){
-                        console.log(`ipcam send : ` + msg);
-                        this.ipcam.send(msg);
+                    console.log(Date.now()+`ipcam send : ` + msg);
+                    var mj = JSON.parse(msg);
+                    switch (mj["command"]){
+                        case "axis":
+                            if(this.ipcam !==undefined){
+                                this.ipcam.send(msg);
+                            }
+                            break;
+                        case "capture" :
+                            this.capture = true;
+                            break;
+                            
                     }
+                     
+                
+                        
+                    
+                    
                 })
             }else if(conAuthArr[0]=="ipcam" && this.ipcam ===undefined){
                 this.ipcam = ws; 
@@ -41,6 +56,29 @@ class Websocket {
                 ws.on('message', (msg)=>{
                     if(this.mon !==undefined){
                         this.mon.send(msg);
+                    }
+                    if(this.capture){
+                        this.capture = false;
+                        const buffer = Buffer.from(msg);
+                        const mtime = new Date();
+                        const currentDate = new Date(mtime.getTime() + (9 * 60 * 60 * 1000));
+                        const year = currentDate.getFullYear();
+                        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+                        const day = String(currentDate.getDate()).padStart(2, '0');
+                        const hours = String(currentDate.getHours()).padStart(2, '0');
+                        const minutes = String(currentDate.getMinutes()).padStart(2, '0');
+                        const seconds = String(currentDate.getSeconds()).padStart(2, '0');
+                        const milliseconds = String(currentDate.getMilliseconds()).padStart(3, '0');
+
+                        const formattedDate = `${year}${month}${day}${hours}${minutes}${seconds}${milliseconds}`;
+                   
+                        fs.writeFile("./capture/"+formattedDate+'.png', buffer, (err) => {
+                            if (err) {
+                              console.error(err);
+                              return;
+                            }
+                            console.log('Image saved successfully.');
+                        });
                     }
                 })
             }else{

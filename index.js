@@ -4,9 +4,9 @@ const app = express();
 var port = process.env.PORT | 8080 ; 
 
 
-app.use("/", (req, res)=>{
-    res.sendFile(__dirname+'/index.html'); // index.html 파일 응답
-})
+// app.use("/", (req, res)=>{
+//     res.sendFile(__dirname+'/index.html'); // index.html 파일 응답
+// })
 
 
 const HTTPServer = app.listen(port, ()=>{

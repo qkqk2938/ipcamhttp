@@ -5,6 +5,7 @@
 </head> 
 <body> 
 <img id='live' src=''> 
+<input type="button" value="up"/>
   <div id = 'keypad'>
     <div id = 'krow1'>
     	<div id = 'up' class='key' style='width:50px; height:50px;margin-left:50px;' >
@@ -35,21 +36,21 @@
 	setup(); 
 	} 
 	function setup(){ 
-		var host = 'ws://34.125.119.133:80'; 
+		var host = 'ws://34.125.119.133'; 
 		var socket = new WebSocket(host,"mon_2938"); 
 		socket.binaryType = 'arraybuffer'; 
 		if(socket){ 
 			socket.onopen = function(){ 
 			console.log("웹소켓서버와 연결 성공");
 		} 
+		var img = document.getElementById('live');
 		socket.onmessage = function(msg){ 
 			var bytes = new Uint8Array(msg.data); 
 			var binary= ''; 
 			var len = bytes.byteLength; 
 			for (var i = 0; i < len; i++) { 
 				binary += String.fromCharCode(bytes[i]) 
-			} 
-			var img = document.getElementById('live'); 
+			}  
 			img.src = 'data:image/jpg;base64,'+window.btoa(binary); 
 		} 
 		socket.onclose = function(){ 

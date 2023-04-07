@@ -1,6 +1,6 @@
 #include "esp_camera.h"
 #include <WiFi.h>
-#include <WebSocketsServer.h>
+#include <WebSocketsClient.h>
 
 #define PWDN_GPIO_NUM     32
 #define RESET_GPIO_NUM    -1
@@ -21,92 +21,9 @@
 #define PCLK_GPIO_NUM     22
 
 
-WebSocketsServer webSocket = WebSocketsServer(81);
-WiFiServer server(80);
-uint8_t cam_num;
+WebSocketsClient webSocket ;
 bool connected = false;
 
-String index_html =   "<html> \n\
-<head> \n\
-<title> WebSockets Client</title> \n\
-<script src='http://code.jquery.com/jquery-1.9.1.min.js'></script> \n\
-</head> \n\
-<body> \n\
-<img id='live' src=''> \n\
-  <div id = 'keypad'>\n\
-    <div id = 'krow1'>\n\
-    	<div id = 'up' class='key' style='width:50px; height:50px;margin-left:50px;' >\n\
-      		<img src = 'https://cdn-icons-png.flaticon.com/512/7860/7860593.png' style='transform:rotate(180deg);width:100%;'>\n\
-    	</div>\n\
-    </div>\n\
-    <div id = 'krow2'  style = 'overflow:hidden;'>\n\
-    	<div id = 'left' class='key' style='width:50px; height:50px;float:left;' >\n\
-    		<img src = 'https://cdn-icons-png.flaticon.com/512/7860/7860593.png' style='transform:rotate(90deg);width:100%;'>\n\
-    	</div>\n\
-    	<div id = 'right' class='key' style='width:50px; height:50px;float:left;margin-left:50px;' >\n\
-      		<img src = 'https://cdn-icons-png.flaticon.com/512/7860/7860593.png' style='transform:rotate(270deg);width:100%;'>\n\
-    	</div>\n\
-    </div>\n\
-    <div id = 'krow1'>\n\
-    	<div id = 'down' class='key' style='width:50px; height:50px;margin-left:50px;' >\n\
-    		<img src = 'https://cdn-icons-png.flaticon.com/512/7860/7860593.png' style='transform:rotate(0deg);width:100%;'>\n\
-    	</div>\n\
-	</div>\n\
-  </div>\n\
-</body> \n\
-</html> \n\
-<script> \n\
-jQuery(function($){ \n\
-if (!('WebSocket' in window)) { \n\
-alert('Your browser does not support web sockets'); \n\
-}else{ \n\
-setup(); \n\
-} \n\
-function setup(){ \n\
-var host = 'ws://server_ip:81'; \n\
-var socket = new WebSocket(host); \n\
-socket.binaryType = 'arraybuffer'; \n\
-if(socket){ \n\
-socket.onopen = function(){ \n\
-} \n\
-socket.onmessage = function(msg){ \n\
-var bytes = new Uint8Array(msg.data); \n\
-var binary= ''; \n\
-var len = bytes.byteLength; \n\
-for (var i = 0; i < len; i++) { \n\
-binary += String.fromCharCode(bytes[i]) \n\
-} \n\
-var img = document.getElementById('live'); \n\
-img.src = 'data:image/jpg;base64,'+window.btoa(binary); \n\
-} \n\
-socket.onclose = function(){ \n\
-showServerResponse('The connection has been closed.'); \n\
-} \n\
-$('.key').mousedown(function(){\n\
-	if(socket.readyState === socket.OPEN){ // 연결 상태 확인\n\
-		socket.send($(this).attr('id')); // 웹소켓 서버에게 메시지 전송\n\
-    }else{\n\
-        alert('연결된 웹소켓 서버가 없습니다.');\n\
-    }\n\
-});\n\
-$('.key').mouseup(function(){\n\
-	if(socket.readyState === socket.OPEN){ // 연결 상태 확인\n\
-		socket.send('reset'); // 웹소켓 서버에게 메시지 전송\n\
-    }else{\n\
-        alert('연결된 웹소켓 서버가 없습니다.');\n\
-    }\n\
-});\n\
-$('.key').mouseout(function(){\n\
-	if(socket.readyState === socket.OPEN){ // 연결 상태 확인\n\
-		socket.send('reset'); // 웹소켓 서버에게 메시지 전송\n\
-    }else{\n\
-        alert('연결된 웹소켓 서버가 없습니다.');\n\
-    }\n\
-});\n\
-} \n\
-} \n\
-}); \n\
-</script>";
 
 void configCamera(){
   camera_config_t config;
@@ -142,7 +59,7 @@ void configCamera(){
   }
 }
 
-void liveCam(uint8_t num){
+void liveCam(){
   //capture a frame
   camera_fb_t * fb = esp_camera_fb_get();
   if (!fb) {
@@ -150,24 +67,24 @@ void liveCam(uint8_t num){
       return;
   }
   //replace this with your own function
-  webSocket.sendBIN(num, fb->buf, fb->len);
+  webSocket.sendBIN(fb->buf, fb->len);
 
   //return the frame buffer back to be reused
   esp_camera_fb_return(fb);
 }
-
-void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
+void webSocketEvent( WStype_t type, uint8_t * payload, size_t length) {
 
     switch(type) {
         case WStype_DISCONNECTED:
-            Serial.printf("[%u] Disconnected!\n", num);
+            connected = false;
             break;
         case WStype_CONNECTED:
-            cam_num = num;
             connected = true;
             break;
         case WStype_TEXT:
         case WStype_BIN:
+           Serial.println();
+            Serial.write(payload, sizeof(payload));
         case WStype_ERROR:      
         case WStype_FRAGMENT_TEXT_START:
         case WStype_FRAGMENT_BIN_START:
@@ -179,7 +96,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
 void setup() {
   Serial.begin(115200);
-  WiFi.begin("I3.41", "xxx");
+  WiFi.begin("U+NetD243", "4000000486");
   Serial.println("");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -188,26 +105,16 @@ void setup() {
   Serial.println("");
   String IP = WiFi.localIP().toString();
   Serial.print("IP address: " + IP);
-  index_html.replace("server_ip", IP);
-  server.begin();
-  webSocket.begin();
+  webSocket.begin("34.125.119.133", 80,"/","ipcam");
   webSocket.onEvent(webSocketEvent);
   configCamera();
 }
     
-void http_resp(){
-  WiFiClient client = server.available();
-  if (client.connected() && client.available()) {                   
-    client.flush();          
-    client.print(index_html);
-    client.stop();
-  }
-}
 
 void loop() {
-  http_resp();
+
   webSocket.loop();
   if(connected == true){
-    liveCam(cam_num);
+    liveCam();
   }
 }
