@@ -2,7 +2,6 @@
 const wsModule = require('ws');
 const fs = require('fs');
 
-
 class Websocket {
     
     constructor() {
@@ -11,16 +10,18 @@ class Websocket {
         this.capture = false;
     }
 
+
     createServer(HTTPServer){
         console.log(`ws server on`);
-  
+       
         const wsServer = new wsModule.Server( 
             {
                 server: HTTPServer, // WebSocket서버에 연결할 HTTP서버를 지정한다.
                
             }
         );
-        
+
+      
         wsServer.on('connection', async (ws, request)=> {
 
             const ip = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
@@ -55,6 +56,8 @@ class Websocket {
                 console.log(`ipcam up`);
                 ws.on('message', (msg)=>{
                     if(this.mon !==undefined){
+                        console.log("cam");
+                        
                         this.mon.send(msg);
                     }
                     if(this.capture){
@@ -72,7 +75,7 @@ class Websocket {
 
                         const formattedDate = `${year}${month}${day}${hours}${minutes}${seconds}${milliseconds}`;
                    
-                        fs.writeFile("./capture/"+formattedDate+'.png', buffer, (err) => {
+                        fs.writeFile("./public/capture/"+formattedDate+'.png', buffer, (err) => {
                             if (err) {
                               console.error(err);
                               return;

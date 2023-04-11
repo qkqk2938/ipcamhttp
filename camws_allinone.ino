@@ -1,6 +1,7 @@
 #include "esp_camera.h"
 #include <WiFi.h>
 #include <WebSocketsClient.h>
+#include <ArduinoJson.h>
 
 #define PWDN_GPIO_NUM     32
 #define RESET_GPIO_NUM    -1
@@ -22,8 +23,10 @@
 
 
 WebSocketsClient webSocket ;
-bool connected = false;
 
+bool connected = false;
+StaticJsonDocument<256> doc;
+String data ;
 
 void configCamera(){
   camera_config_t config;
@@ -66,10 +69,20 @@ void liveCam(){
       Serial.println("Frame buffer could not be acquired");
       return;
   }
-  //replace this with your own function
-  webSocket.sendBIN(fb->buf, fb->len);
+  webSocket.sendBIN( fb->buf,fb->len);
 
+  //replace this with your own function
+  // size_t jpg_buf_len = fb->len;
+  // uint8_t *jpg_buf = new uint8_t[jpg_buf_len];
+  // Serial.println("w");
+  // bool ok = frame2jpg(fb, 80, &jpg_buf, &jpg_buf_len);
+  // Serial.println("j");
+  // if (ok){
+  //    webSocket.sendBIN( jpg_buf,jpg_buf_len);
+  // }
+  // Serial.println("s");
   //return the frame buffer back to be reused
+//  delete[] jpg_buf;
   esp_camera_fb_return(fb);
 }
 void webSocketEvent( WStype_t type, uint8_t * payload, size_t length) {
@@ -82,10 +95,15 @@ void webSocketEvent( WStype_t type, uint8_t * payload, size_t length) {
             connected = true;
             break;
         case WStype_TEXT:
+          deserializeJson(doc, payload, length);
+          data = doc["data"].as<String>();
+          Serial.println(data);
+          break;
         case WStype_BIN:
-           Serial.println();
-            Serial.write(payload, sizeof(payload));
-        case WStype_ERROR:      
+          Serial.println();
+          Serial.write(payload, length);
+          break;
+        case WStype_ERROR: 
         case WStype_FRAGMENT_TEXT_START:
         case WStype_FRAGMENT_BIN_START:
         case WStype_FRAGMENT:
@@ -105,7 +123,7 @@ void setup() {
   Serial.println("");
   String IP = WiFi.localIP().toString();
   Serial.print("IP address: " + IP);
-  webSocket.begin("34.125.119.133", 80,"/","ipcam");
+  webSocket.begin("34.125.119.133",80,"/","ipcam");;
   webSocket.onEvent(webSocketEvent);
   configCamera();
 }

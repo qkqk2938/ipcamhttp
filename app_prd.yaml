@@ -1,0 +1,7 @@
+runtime: nodejs16
+env: standard
+service: ipcamserver
+instance_class: F4
+automatic_scaling:
+  max_idle_instances: 10
+  min_idle_instances: 1

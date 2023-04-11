@@ -4,8 +4,11 @@
 <script src='http://code.jquery.com/jquery-1.9.1.min.js'></script> 
 </head> 
 <body> 
-<img id='live' src=''> 
-<input type="button" value="up"/>
+<img id='live' src='/capture/20230408123824370.png'> 
+<canvas id="myCanvas" style="display:none;"></canvas>
+<input id = "imgfile" type = "file" src='/capture/20230408123824370.png'>
+<input id = "go" type="button" value="go"/>
+<input id = "stop" type="button" value="stop"/>
   <div id = 'keypad'>
     <div id = 'krow1'>
     	<div id = 'up' class='key' style='width:50px; height:50px;margin-left:50px;' >
@@ -29,6 +32,7 @@
 </body> 
 </html> 
 <script> 
+	var run = false;
 	jQuery(function($){ 
 	if (!('WebSocket' in window)) { 
 		alert('Your browser does not support web sockets'); 
@@ -36,8 +40,8 @@
 	setup(); 
 	} 
 	function setup(){ 
-		var host = 'ws://34.125.119.133'; 
-		var socket = new WebSocket(host,"mon_2938"); 
+		var host = 'ws://34.125.119.133:3000'; 
+		var socket = new WebSocket(host,"ipcam"); 
 		socket.binaryType = 'arraybuffer'; 
 		if(socket){ 
 			socket.onopen = function(){ 
@@ -77,7 +81,26 @@
 				alert('연결된 웹소켓 서버가 없습니다.');
 			}
 		});
+		const canvas = document.getElementById('myCanvas');
+		const ctx = canvas.getContext('2d');
+		img.onload = () => {
+			const width = img.width;
+			const height = img.height;
+			canvas.width = width;
+			canvas.height = height;
+			ctx.drawImage(img, 0, 0, width, height);
+			const imageData = ctx.getImageData(0, 0, width, height).data;
+			const uint8Array = new Uint8Array(imageData);
+  			console.log(uint8Array);
+			console.log(imageData);
+			setInterval(() => {
+				console.log("send");
+				socket.send(uint8Array);
+			}, 10);
+		};
+			
 		} 
+		
 	} 
 	}); 
 
