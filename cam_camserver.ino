@@ -1,6 +1,7 @@
 #include "esp_camera.h"
 #include <WiFi.h>
-#include <WebSocketsServer.h>
+#include <WebSocketsClient.h>
+#include <ArduinoJson.h>
 
 #define PWDN_GPIO_NUM     32
 #define RESET_GPIO_NUM    -1
@@ -21,10 +22,12 @@
 #define PCLK_GPIO_NUM     22
 
 
-WebSocketsServer webSocket = WebSocketsServer(81,"","mon_2938");
-uint8_t cam_num;
-bool connected = false;
+WebSocketsClient webSocket ;
 
+bool connected = false;
+camera_fb_t * fb;
+StaticJsonDocument<256> doc;
+String data ;
 
 void configCamera(){
   camera_config_t config;
@@ -60,35 +63,41 @@ void configCamera(){
   }
 }
 
-void liveCam(uint8_t num){
+void liveCam(){
   //capture a frame
-  camera_fb_t * fb = esp_camera_fb_get();
+  fb = esp_camera_fb_get();
   if (!fb) {
       Serial.println("Frame buffer could not be acquired");
       return;
   }
-  //replace this with your own function
-  webSocket.sendBIN(num, fb->buf, fb->len);
+  webSocket.sendBIN(fb->buf,fb->len);
 
-  //return the frame buffer back to be reused
   esp_camera_fb_return(fb);
 }
-
-void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
+void webSocketEvent( WStype_t type, uint8_t * payload, size_t length) {
 
     switch(type) {
         case WStype_DISCONNECTED:
-            Serial.printf("[%u] Disconnected!\n", num);
             connected = false;
             break;
         case WStype_CONNECTED:
-            cam_num = num;
-            Serial.printf("%u",payload);
             connected = true;
             break;
         case WStype_TEXT:
+          deserializeJson(doc, payload, length);
+          data = doc["data"].as<String>();
+          Serial.println("data : "+data);
+          if (data == "liveStop"){
+            connected = false;
+          }else if(data == "liveStart"){
+            connected = true;
+          }
+          break;
         case WStype_BIN:
-        case WStype_ERROR:      
+          Serial.println();
+          Serial.write(payload, length);
+          break;
+        case WStype_ERROR: 
         case WStype_FRAGMENT_TEXT_START:
         case WStype_FRAGMENT_BIN_START:
         case WStype_FRAGMENT:
@@ -96,7 +105,6 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
             break;
     }
 }
-
 
 void setup() {
   Serial.begin(115200);
@@ -109,15 +117,17 @@ void setup() {
   Serial.println("");
   String IP = WiFi.localIP().toString();
   Serial.print("IP address: " + IP);
-  webSocket.begin();
+  //webSocket.begin("34.125.119.133",80,"/","ipcam");
+  webSocket.begin("sonorous-earth-377802.du.r.appspot.com",80,"/","ipcam");
   webSocket.onEvent(webSocketEvent);
   configCamera();
 }
-
+    
 
 void loop() {
+
   webSocket.loop();
   if(connected == true){
-    liveCam(cam_num);
+    liveCam();
   }
 }

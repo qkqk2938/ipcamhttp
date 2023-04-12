@@ -7,7 +7,6 @@ class Websocket {
     constructor() {
         this.ipcam;
         this.mon;
-        this.capture = false;
     }
 
 
@@ -31,58 +30,41 @@ class Websocket {
             if(conAuthArr[0]=="mon" && conAuthArr[1] == "2938" && this.mon ===undefined){
                 this.mon = ws;
                 console.log(`mon up`);
+                if(this.ipcam !==undefined){
+                    console.log(`Live Start`);
+                    this.ipcam.send("{'data':'liveStart'}");
+                }
                 ws.on('message', (msg)=>{
-                    console.log(Date.now()+`ipcam send : ` + msg);
-                    var mj = JSON.parse(msg);
-                    switch (mj["command"]){
-                        case "axis":
-                            if(this.ipcam !==undefined){
-                                this.ipcam.send(msg);
-                            }
-                            break;
-                        case "capture" :
-                            this.capture = true;
-                            break;
-                            
+                    if(this.ipcam !==undefined){ 
+                        this.ipcam.send(msg);
                     }
-                     
+                    
+                })
+                // 연결 종료 이벤트 처리
+                ws.on('close', ()=>{
+                    console.log(`클라이언트[${ip}] 웹소켓 연결 종료`);
+                    this.mon = undefined;                
+                    console.log(`mon die`);
                 
-                        
-                    
-                    
                 })
             }else if(conAuthArr[0]=="ipcam" && this.ipcam ===undefined){
                 this.ipcam = ws; 
                 console.log(`ipcam up`);
                 ws.on('message', (msg)=>{
-                    if(this.mon !==undefined){
-                        console.log("cam");
-                        
+                    if(this.mon !==undefined){                        
                         this.mon.send(msg);
+                    }else{
+                        console.log(`Live Stop`);
+                        this.ipcam.send('{"data":"liveStop"}');
                     }
-                    if(this.capture){
-                        this.capture = false;
-                        const buffer = Buffer.from(msg);
-                        const mtime = new Date();
-                        const currentDate = new Date(mtime.getTime() + (9 * 60 * 60 * 1000));
-                        const year = currentDate.getFullYear();
-                        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-                        const day = String(currentDate.getDate()).padStart(2, '0');
-                        const hours = String(currentDate.getHours()).padStart(2, '0');
-                        const minutes = String(currentDate.getMinutes()).padStart(2, '0');
-                        const seconds = String(currentDate.getSeconds()).padStart(2, '0');
-                        const milliseconds = String(currentDate.getMilliseconds()).padStart(3, '0');
-
-                        const formattedDate = `${year}${month}${day}${hours}${minutes}${seconds}${milliseconds}`;
-                   
-                        fs.writeFile("./public/capture/"+formattedDate+'.png', buffer, (err) => {
-                            if (err) {
-                              console.error(err);
-                              return;
-                            }
-                            console.log('Image saved successfully.');
-                        });
-                    }
+                 
+                })
+                 // 연결 종료 이벤트 처리
+                ws.on('close', ()=>{
+                    console.log(`클라이언트[${ip}] 웹소켓 연결 종료`);
+                    this.ipcam = undefined;                
+                    console.log(`ipcam die`);
+                    
                 })
             }else{
                 ws.close();
@@ -101,17 +83,7 @@ class Websocket {
                 console.log(`클라이언트[${ip}] 연결 에러발생 : ${error}`);
             })
             
-            // 5) 연결 종료 이벤트 처리
-            ws.on('close', ()=>{
-                console.log(`클라이언트[${ip}] 웹소켓 연결 종료`);
-                if(conAuthArr[0]=="mon"){
-                    this.mon = undefined;                
-                    console.log(`mon die`);
-                }else if(conAuthArr[0]=="ipcam"){
-                    this.ipcam = undefined;                
-                    console.log(`ipcam die`);
-                }
-            })
+           
          
         });
     }
