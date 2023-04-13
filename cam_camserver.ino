@@ -78,9 +78,11 @@ void webSocketEvent( WStype_t type, uint8_t * payload, size_t length) {
 
     switch(type) {
         case WStype_DISCONNECTED:
+            Serial.println("Wobsket Disconnected");
             connected = false;
             break;
         case WStype_CONNECTED:
+            Serial.println("Wobsket Connected");
             connected = true;
             break;
         case WStype_TEXT:
@@ -98,6 +100,9 @@ void webSocketEvent( WStype_t type, uint8_t * payload, size_t length) {
           Serial.write(payload, length);
           break;
         case WStype_ERROR: 
+          Serial.println();
+          Serial.write(payload, length);
+          break;
         case WStype_FRAGMENT_TEXT_START:
         case WStype_FRAGMENT_BIN_START:
         case WStype_FRAGMENT:
@@ -129,5 +134,8 @@ void loop() {
   webSocket.loop();
   if(connected == true){
     liveCam();
+  }else{
+    delay(500);
+    webSocket.sendPing();
   }
 }

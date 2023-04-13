@@ -1,6 +1,5 @@
 'use strict'
 const wsModule = require('ws');
-const fs = require('fs');
 
 class Websocket {
     
@@ -8,7 +7,7 @@ class Websocket {
         this.ipcam;
         this.mon;
     }
-
+    
 
     createServer(HTTPServer){
         console.log(`ws server on`);
