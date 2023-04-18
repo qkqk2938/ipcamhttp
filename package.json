@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "deploy_prd": "gcloud app deploy app_prd.yaml --project='sonorous-earth-377802' "
+    "deploy": "gcloud app deploy app_prd.yaml --project='sonorous-earth-377802' "
   },
   "repository": {
     "type": "git",
