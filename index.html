@@ -4,32 +4,36 @@
 <script src='https://code.jquery.com/jquery-1.9.1.min.js'></script> 
 </head> 
 <body> 
-<img id='live' src=''> 
-  <div id = 'keypad'>
-    <div id = 'krow1'>
-    	<div id = 'up' class='key' style='width:50px; height:50px;margin-left:50px;' >
-      		<img src = 'https://cdn-icons-png.flaticon.com/512/7860/7860593.png' style='transform:rotate(180deg);width:100%;'>
-    	</div>
-    </div>
-    <div id = 'krow2'  style = 'overflow:hidden;'>
-    	<div id = 'left' class='key' style='width:50px; height:50px;float:left;' >
-    		<img src = 'https://cdn-icons-png.flaticon.com/512/7860/7860593.png' style='transform:rotate(90deg);width:100%;'>
-    	</div>
-    	<div id = 'stop' class='key' style='width:50px; height:50px;float:left;' >
-      		<img src = 'https://cdn-icons-png.flaticon.com/512/2584/2584958.png' style='width:100%;'>
-    	</div>
-    	<div id = 'right' class='key' style='width:50px; height:50px;float:left;' >
-      		<img src = 'https://cdn-icons-png.flaticon.com/512/7860/7860593.png' style='transform:rotate(270deg);width:100%;'>
-    	</div>
-    </div>
-    <div id = 'krow1'>
-    	<div id = 'down' class='key' style='width:50px; height:50px;margin-left:50px;' >
-    		<img src = 'https://cdn-icons-png.flaticon.com/512/7860/7860593.png' style='width:100%;'>
-    	</div>
+	<div id = "authDiv">
+		<input type="password" id = "wspassword" value="mon_"/>
+		<input type="button" id = "connect" value="connect" />
 	</div>
-	speed<input type="range" min="1" max="100" id="speedRange">
-	mecanum<input type="checkbox" id="mecanum">
-  </div>
+	<img id='live' src=''> 
+  	<div id = 'keypad'>
+		<div id = 'krow1'>
+			<div id = 'up' class='key' style='width:50px; height:50px;margin-left:50px;' >
+				<img src = 'https://cdn-icons-png.flaticon.com/512/7860/7860593.png' style='transform:rotate(180deg);width:100%;'>
+			</div>
+		</div>
+		<div id = 'krow2'  style = 'overflow:hidden;'>
+			<div id = 'left' class='key' style='width:50px; height:50px;float:left;' >
+				<img src = 'https://cdn-icons-png.flaticon.com/512/7860/7860593.png' style='transform:rotate(90deg);width:100%;'>
+			</div>
+			<div id = 'stop' class='key' style='width:50px; height:50px;float:left;' >
+				<img src = 'https://cdn-icons-png.flaticon.com/512/2584/2584958.png' style='width:100%;'>
+			</div>
+			<div id = 'right' class='key' style='width:50px; height:50px;float:left;' >
+				<img src = 'https://cdn-icons-png.flaticon.com/512/7860/7860593.png' style='transform:rotate(270deg);width:100%;'>
+			</div>
+		</div>
+		<div id = 'krow1'>
+			<div id = 'down' class='key' style='width:50px; height:50px;margin-left:50px;' >
+				<img src = 'https://cdn-icons-png.flaticon.com/512/7860/7860593.png' style='width:100%;'>
+			</div>
+		</div>
+		speed<input type="range" min="1" max="100" id="speedRange">
+		mecanum<input type="checkbox" id="mecanum">
+	</div>
 </body> 
 </html> 
 <script>
@@ -37,17 +41,21 @@
 	if (!('WebSocket' in window)) { 
 		alert('Your browser does not support web sockets'); 
 	}else{ 
-	setup(); 
-	} 
+	
+	}
+	$("#connect").click(function(){
+		setup(); 
+	});
 	function setup(){ 
 		//var host = 'ws://34.125.119.133'; 
 		var host = 'wss://sonorous-earth-377802.du.r.appspot.com'; 
-		var socket = new WebSocket(host,"mon_2938"); 
+		var socket = new WebSocket(host,$("#wspassword").val()); 
 		socket.binaryType = 'arraybuffer'; 
 		if(socket){ 
 			socket.onopen = function(){ 
 				console.log("웹소켓서버와 연결 성공");
 				socket.send(`{"command": "axis","data": "off"}`);
+				$("#authDiv").hide();
 			} 
 			var img = document.getElementById('live');
 			socket.onmessage = function(msg){ 
