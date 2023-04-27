@@ -3,6 +3,7 @@
 #include <WebSocketsClient.h>
 #include <ArduinoJson.h>
 
+
 #define PWDN_GPIO_NUM     32
 #define RESET_GPIO_NUM    -1
 #define XCLK_GPIO_NUM      0
@@ -28,6 +29,7 @@ bool connected = false;
 camera_fb_t * fb;
 StaticJsonDocument<256> doc;
 String data ;
+JsonArray arr;
 
 void configCamera(){
   camera_config_t config;
@@ -78,7 +80,7 @@ void webSocketEvent( WStype_t type, uint8_t * payload, size_t length) {
 
     switch(type) {
         case WStype_DISCONNECTED:
-            Serial.println("Wobsket Disconnected");
+            Serial.println("Wobsket Disconnected : ");
             connected = false;
             break;
         case WStype_CONNECTED:
@@ -88,7 +90,6 @@ void webSocketEvent( WStype_t type, uint8_t * payload, size_t length) {
         case WStype_TEXT:
           deserializeJson(doc, payload, length);
           data = doc["data"].as<String>();
-          Serial.println("data : "+data);
           if (data == "liveStop"){
             connected = false;
           }else if(data == "liveStart"){
@@ -96,6 +97,11 @@ void webSocketEvent( WStype_t type, uint8_t * payload, size_t length) {
           }
           break;
         case WStype_BIN:
+          // deserializeJson(doc, payload, length);
+          // arr = doc["data"].as<JsonArray>();
+          // for(JsonVariant v : arr) {
+          //     Serial.println(v.as<float>());
+          // }
           Serial.println();
           Serial.write(payload, length);
           break;
@@ -112,6 +118,16 @@ void webSocketEvent( WStype_t type, uint8_t * payload, size_t length) {
 }
 
 void setup() {
+  
+  // pinMode(12,OUTPUT);
+  // pinMode(13,INPUT);
+  // pinMode(15,OUTPUT);
+  // pinMode(14,INPUT);  
+  // pinMode(2,OUTPUT);
+  // pinMode(4,INPUT);
+  // pinMode(16,OUTPUT);
+  // pinMode(0,INPUT);   
+
   Serial.begin(115200);
   WiFi.begin("U+NetD243", "4000000486");
   Serial.println("");
@@ -135,7 +151,14 @@ void loop() {
   if(connected == true){
     liveCam();
   }else{
-    delay(500);
-    webSocket.sendPing();
+    // delay(1000);
+    // webSocket.sendPing();
   }
+
+  // digitalWrite(12,(digitalRead(13)==HIGH)?LOW:HIGH);
+  // digitalWrite(15,(digitalRead(14)==HIGH)?LOW:HIGH);
+  // digitalWrite(2,(digitalRead(4)==HIGH)?LOW:HIGH);
+  // digitalWrite(16,(digitalRead(0)==HIGH)?LOW:HIGH);
+
+
 }

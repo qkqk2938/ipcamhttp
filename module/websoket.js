@@ -34,6 +34,7 @@ class Websocket {
                     this.ipcam.send("{'data':'liveStart'}");
                 }
                 ws.on('message', (msg)=>{
+                    console.log(msg);
                     if(this.drivetrain && this.ipcam){ 
                         this.drivetrain.send(msg);
                     }

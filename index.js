@@ -5,7 +5,11 @@ var port = process.env.PORT | 8080 ;
 var wss  = new websocket;
 
 
-//  app.use(express.static('public'));
+app.use("/view", (req, res)=>{
+    res.sendFile(__dirname +'/index.html'); 
+});
+
+
 app.use("/k", (req, res)=>{
   
     return "k";
@@ -26,6 +30,15 @@ app.use("/killcam", (req, res)=>{
     wss.ipcam = undefined;
     console.log(`killcam`);
     return "killcam";
+
+});
+app.use("/killdrive", (req, res)=>{
+    if(wss.drivetrain!==undefined){
+        wss.drivetrain.close();
+    }
+    wss.drivetrain = undefined;
+    console.log(`killdrivetrain`);
+    return "killdrive";
 
 });
 const HTTPServer = app.listen(port, ()=>{

@@ -1,14 +1,10 @@
 <html> 
 <head> 
 <title> WebSockets Client</title> 
-<script src='http://code.jquery.com/jquery-1.9.1.min.js'></script> 
+<script src='https://code.jquery.com/jquery-1.9.1.min.js'></script> 
 </head> 
 <body> 
-<img id='live' src='/capture/20230408123824370.png'> 
-<canvas id="myCanvas" style="display:none;"></canvas>
-<input id = "imgfile" type = "file" src='/capture/20230408123824370.png'>
-<input id = "go" type="button" value="go"/>
-<input id = "stop" type="button" value="stop"/>
+<img id='live' src=''> 
   <div id = 'keypad'>
     <div id = 'krow1'>
     	<div id = 'up' class='key' style='width:50px; height:50px;margin-left:50px;' >
@@ -19,20 +15,24 @@
     	<div id = 'left' class='key' style='width:50px; height:50px;float:left;' >
     		<img src = 'https://cdn-icons-png.flaticon.com/512/7860/7860593.png' style='transform:rotate(90deg);width:100%;'>
     	</div>
-    	<div id = 'right' class='key' style='width:50px; height:50px;float:left;margin-left:50px;' >
+    	<div id = 'stop' class='key' style='width:50px; height:50px;float:left;' >
+      		<img src = 'https://cdn-icons-png.flaticon.com/512/2584/2584958.png' style='width:100%;'>
+    	</div>
+    	<div id = 'right' class='key' style='width:50px; height:50px;float:left;' >
       		<img src = 'https://cdn-icons-png.flaticon.com/512/7860/7860593.png' style='transform:rotate(270deg);width:100%;'>
     	</div>
     </div>
     <div id = 'krow1'>
     	<div id = 'down' class='key' style='width:50px; height:50px;margin-left:50px;' >
-    		<img src = 'https://cdn-icons-png.flaticon.com/512/7860/7860593.png' style='transform:rotate(0deg);width:100%;'>
+    		<img src = 'https://cdn-icons-png.flaticon.com/512/7860/7860593.png' style='width:100%;'>
     	</div>
 	</div>
+	speed<input type="range" min="1" max="100" id="speedRange">
+	mecanum<input type="checkbox" id="mecanum">
   </div>
 </body> 
 </html> 
-<script> 
-	var run = false;
+<script>
 	jQuery(function($){ 
 	if (!('WebSocket' in window)) { 
 		alert('Your browser does not support web sockets'); 
@@ -40,64 +40,68 @@
 	setup(); 
 	} 
 	function setup(){ 
-		var host = 'ws://34.125.119.133:3000'; 
-		var socket = new WebSocket(host,"ipcam"); 
+		//var host = 'ws://34.125.119.133'; 
+		var host = 'wss://sonorous-earth-377802.du.r.appspot.com'; 
+		var socket = new WebSocket(host,"mon_2938"); 
 		socket.binaryType = 'arraybuffer'; 
 		if(socket){ 
 			socket.onopen = function(){ 
-			console.log("웹소켓서버와 연결 성공");
-		} 
-		var img = document.getElementById('live');
-		socket.onmessage = function(msg){ 
-			var bytes = new Uint8Array(msg.data); 
-			var binary= ''; 
-			var len = bytes.byteLength; 
-			for (var i = 0; i < len; i++) { 
-				binary += String.fromCharCode(bytes[i]) 
-			}  
-			img.src = 'data:image/jpg;base64,'+window.btoa(binary); 
-		} 
-		socket.onclose = function(){ 
-			alert('The connection has been closed.'); 
-		} 
-		$('.key').mousedown(function(){
-			if(socket.readyState === socket.OPEN){ // 연결 상태 확인
-				socket.send($(this).attr('id')); // 웹소켓 서버에게 메시지 전송
-			}else{
-				alert('연결된 웹소켓 서버가 없습니다.');
-			}
-		});
-		$('.key').mouseup(function(){
-			if(socket.readyState === socket.OPEN){ // 연결 상태 확인
-				socket.send('reset'); // 웹소켓 서버에게 메시지 전송
-			}else{
-				alert('연결된 웹소켓 서버가 없습니다.');
-			}
-		});
-		$('.key').mouseout(function(){
-			if(socket.readyState === socket.OPEN){ // 연결 상태 확인
-				socket.send('reset'); // 웹소켓 서버에게 메시지 전송
-			}else{
-				alert('연결된 웹소켓 서버가 없습니다.');
-			}
-		});
-		const canvas = document.getElementById('myCanvas');
-		const ctx = canvas.getContext('2d');
-		img.onload = () => {
-			const width = img.width;
-			const height = img.height;
-			canvas.width = width;
-			canvas.height = height;
-			ctx.drawImage(img, 0, 0, width, height);
-			const imageData = ctx.getImageData(0, 0, width, height).data;
-			const uint8Array = new Uint8Array(imageData);
-  			console.log(uint8Array);
-			console.log(imageData);
-			setInterval(() => {
-				console.log("send");
-				socket.send(uint8Array);
-			}, 10);
-		};
+				console.log("웹소켓서버와 연결 성공");
+				socket.send(`{"command": "axis","data": "off"}`);
+			} 
+			var img = document.getElementById('live');
+			socket.onmessage = function(msg){ 
+				var bytes = new Uint8Array(msg.data); 
+				var binary= ''; 
+				var len = bytes.byteLength; 
+				for (var i = 0; i < len; i++) { 
+					binary += String.fromCharCode(bytes[i]) 
+				}  
+				img.src = 'data:image/jpg;base64,'+window.btoa(binary); 
+			} 
+			socket.onclose = function(){ 
+				alert('The connection has been closed.'); 
+			} 
+			$("#mecanum").change(function(){
+				if($(this).is(':checked')){
+					socket.send(`{"command": "axis","data": "on"}`);
+				}else{
+					socket.send(`{"command": "axis","data": "off"}`);
+				}
+			});
+			$('.key').click(function(){
+				var x = 0 ;
+				var y = 0 ;
+				switch ($(this).attr("id")){
+					case "up":
+						x = -1;
+						y = 0;
+						break;
+					case "left":
+						x = 0;
+						y = -1;
+						break;
+					case "right":
+						x = 0;
+						y = 1;
+						break;
+					case "down":
+						x = 1;
+						y = 0;
+						break;
+					default:
+						x = 0;
+						y = 0;
+
+				}
+				if(socket.readyState === socket.OPEN){	
+					console.log(x,y);
+					socket.send(`{"command": "axis","data": [`+(x*$("#speedRange").val())/100+`,`+(y*$("#speedRange").val())/100+`]}`);				
+				}
+			});
+	
+
+	
 			
 		} 
 		
