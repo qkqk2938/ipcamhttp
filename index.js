@@ -9,38 +9,52 @@ app.use("/view", (req, res)=>{
     res.sendFile(__dirname +'/index.html'); 
 });
 
-
-app.use("/k", (req, res)=>{
-  
-    return "k";
-});
 app.use("/killmon", (req, res)=>{
-    if(wss.mon!==undefined){
+    if(wss.mon){
         wss.mon.close();
 
     }
-    wss.mon = undefined;
+    wss.mon = null;
     console.log(`killmon`);
-    return "killmon";
+    res.send("killmon");
 });
 app.use("/killcam", (req, res)=>{
-    if(wss.ipcam!==undefined){
+    if(wss.ipcam){
         wss.ipcam.close();
     }
-    wss.ipcam = undefined;
+    wss.ipcam = null;
     console.log(`killcam`);
-    return "killcam";
+    res.send("killcam");
 
 });
 app.use("/killdrive", (req, res)=>{
-    if(wss.drivetrain!==undefined){
+    if(wss.drivetrain){
         wss.drivetrain.close();
     }
-    wss.drivetrain = undefined;
+    wss.drivetrain = null;
     console.log(`killdrivetrain`);
-    return "killdrive";
+    res.send("killdrive");
 
 });
+
+app.use("/status", (req, res)=>{
+    let monstat = "off";
+    let ipcamstat = "off";
+    let drivetrainstat = "off";
+    if(wss.mon){
+        monstat = "on";
+    }
+    if(wss.ipcam){
+        ipcamstat = "on";
+    }
+    if(wss.drivetrain){
+        drivetrainstat = "on";
+    }
+
+    res.send(`{"mon" = "`+monstat+`", "ipcam" = "`+ipcamstat+`", "drivetrain" = "`+drivetrainstat+`"}`);
+
+});
+
 const HTTPServer = app.listen(port, ()=>{
     console.log(`Server is open at port:${port}`);
 });
