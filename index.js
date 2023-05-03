@@ -51,7 +51,7 @@ app.use("/status", (req, res)=>{
         drivetrainstat = "on";
     }
 
-    res.send(`{"mon" = "`+monstat+`", "ipcam" = "`+ipcamstat+`", "drivetrain" = "`+drivetrainstat+`"}`);
+    res.send(`{"mon" : "`+monstat+`", "ipcam" : "`+ipcamstat+`", "drivetrain" : "`+drivetrainstat+`"}`);
 
 });
 
